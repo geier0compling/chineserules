@@ -93,7 +93,7 @@ async function checkHealth() {
     if (!res.ok) throw new Error(`Health failed: ${res.status}`);
     const data = await res.json();
     setStatus(
-      "Connected.",
+      "",
       `Entries: ${data.entries.toLocaleString()} | Characters: ${data.unique_characters.toLocaleString()}`
     );
   } catch (e) {
