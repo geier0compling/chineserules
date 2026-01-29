@@ -18,10 +18,37 @@ ENTRY_COUNT = 0
 CHAR_COUNT = 0
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global INDEX, ENTRY_COUNT, CHAR_COUNT
+
+    lines = load_cedict_lines(CEDICT_PATH)
+    entries = parse_cedict_lines(lines)
+    INDEX = build_char_index(entries)
+
+    ENTRY_COUNT = len(entries)
+    CHAR_COUNT = len(INDEX)
+
+    yield
+
+    INDEX = {}
+
+
+app = FastAPI(title="ChineseRules API", lifespan=lifespan)
+
+# ✅ CORS — allow your frontend domain
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://chineserules.matthewgeier.com",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+
 def entry_to_dict(e: CedictEntry, mode: DisplayMode) -> dict:
-    """
-    Controls what you SHOW. Search works for both scripts because index contains both.
-    """
     if mode == "simp":
         head = {"word": e.simplified}
     elif mode == "trad":
@@ -36,40 +63,6 @@ def entry_to_dict(e: CedictEntry, mode: DisplayMode) -> dict:
     }
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Build the dictionary index once when the server starts.
-    Render will do this on boot.
-    """
-    global INDEX, ENTRY_COUNT, CHAR_COUNT
-
-    lines = load_cedict_lines(CEDICT_PATH)
-    entries = parse_cedict_lines(lines)
-    INDEX = build_char_index(entries)
-
-    ENTRY_COUNT = len(entries)
-    CHAR_COUNT = len(INDEX)
-
-    yield
-
-    # (optional) cleanup
-    INDEX = {}
-
-
-app = FastAPI(title="ChineseRules API", lifespan=lifespan)
-
-# If your website is on another domain, you need CORS.
-# You can tighten this later to your actual domain(s).
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
-
-
 @app.get("/health")
 def health():
     return {
@@ -81,9 +74,9 @@ def health():
 
 @app.get("/lookup")
 def lookup(
-    char: str = Query(..., min_length=1, max_length=1, description="One Chinese character"),
-    mode: DisplayMode = Query("both", description="both | simp | trad"),
-    limit: int = Query(50, ge=1, le=500),
+    char: str = Query(..., min_length=1, max_length=1),
+    mode: DisplayMode = Query("both"),
+    limit: int = Query(25, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     if not INDEX:
@@ -91,8 +84,6 @@ def lookup(
 
     results = INDEX.get(char, [])
     total = len(results)
-
-    # Slice for pagination
     page = results[offset : offset + limit]
 
     return {
@@ -101,9 +92,10 @@ def lookup(
         "results": [entry_to_dict(e, mode) for e in page],
     }
 
+
 @app.get("/")
 def root():
     return {
         "message": "ChineseRules API is running",
-        "try": ["/health", "/lookup?char=学", "/lookup?char=學&mode=trad&limit=10"]
+        "try": ["/health", "/lookup?char=学"],
     }
