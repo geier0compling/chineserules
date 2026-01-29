@@ -21,7 +21,7 @@ function setStatus(text, meta = "") {
 
 // ✅ CHANGE THIS to your real Render API URL (https)
 function apiBase() {
-  return "https://chineserules.matthewgeier.com";
+  return "/api";
 }
 
 function modeLabel(mode) {
