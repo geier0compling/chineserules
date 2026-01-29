@@ -1,9 +1,9 @@
 let offset = 0;
 let lastTotal = 0;
+const PAGE_SIZE = 25;
 
 const charInput = document.getElementById("charInput");
 const modeSelect = document.getElementById("modeSelect");
-const apiBaseInput = document.getElementById("apiBase");
 
 const searchBtn = document.getElementById("searchBtn");
 const clearBtn = document.getElementById("clearBtn");
@@ -13,34 +13,30 @@ const nextBtn = document.getElementById("nextBtn");
 const statusText = document.getElementById("statusText");
 const metaText = document.getElementById("metaText");
 const resultsDiv = document.getElementById("results");
-const PAGE_SIZE = 25;
 
-
-function setStatus(text, meta="") {
+function setStatus(text, meta = "") {
   statusText.textContent = text;
   metaText.textContent = meta;
 }
 
+// ✅ CHANGE THIS to your real Render API URL (https)
 function apiBase() {
-  return "http://127.0.0.1:8000";
+  return "https://chineserules.matthewgeier.com";
+}
+
+function modeLabel(mode) {
+  if (mode === "simp") return "Simplified";
+  if (mode === "trad") return "Traditional";
+  return "Both";
 }
 
 function onlyOneChar(s) {
   const trimmed = (s || "").trim();
-  // handle pasted multiple chars: take first char
   return trimmed.length > 0 ? trimmed[0] : "";
 }
 
 function renderResults(items, mode) {
   resultsDiv.innerHTML = "";
-
-
-function modeLabel(mode) {
-  if (mode === "simp") return "simplified";
-  if (mode === "trad") return "traditional";
-  return "Both";
-}
-
 
   if (!items || items.length === 0) {
     resultsDiv.innerHTML = `<div class="resultItem">No results.</div>`;
@@ -57,7 +53,6 @@ function modeLabel(mode) {
       wordLine = `${escapeHtml(r.simplified)} (${escapeHtml(r.traditional)}) <span class="badge">Both</span>`;
     }
 
-
     const defs = (r.definitions || []).slice(0, 4).map(escapeHtml).join("; ");
     const pinyin = escapeHtml(r.pinyin || "");
 
@@ -70,9 +65,10 @@ function modeLabel(mode) {
 
       <div class="kv">
         <div class="k">Chinese</div>
-        <div class="v">${mode === "both"
-          ? `${escapeHtml(r.simplified)} <span class="muted">(${escapeHtml(r.traditional)})</span>`
-          : `${escapeHtml(r.word)}`
+        <div class="v">${
+          mode === "both"
+            ? `${escapeHtml(r.simplified)} <span class="muted">(${escapeHtml(r.traditional)})</span>`
+            : `${escapeHtml(r.word)}`
         }</div>
 
         <div class="k">Pinyin</div>
@@ -88,7 +84,7 @@ function modeLabel(mode) {
 
 function updatePager() {
   prevBtn.disabled = offset <= 0;
-nextBtn.disabled = (offset + PAGE_SIZE) >= lastTotal;
+  nextBtn.disabled = (offset + PAGE_SIZE) >= lastTotal;
 }
 
 async function checkHealth() {
@@ -96,13 +92,16 @@ async function checkHealth() {
     const res = await fetch(`${apiBase()}/health`);
     if (!res.ok) throw new Error(`Health failed: ${res.status}`);
     const data = await res.json();
-    setStatus("Connected.", `Entries: ${data.entries.toLocaleString()} | Characters: ${data.unique_characters.toLocaleString()}`);
+    setStatus(
+      "Connected.",
+      `Entries: ${data.entries.toLocaleString()} | Characters: ${data.unique_characters.toLocaleString()}`
+    );
   } catch (e) {
-    setStatus("API not reachable.", "Is FastAPI running? Is the API Base URL correct?");
+    setStatus("API not reachable.", "Is the Render API deployed and URL correct?");
   }
 }
 
-async function search(resetOffset=true) {
+async function search(resetOffset = true) {
   const ch = onlyOneChar(charInput.value);
   charInput.value = ch;
 
@@ -131,6 +130,7 @@ async function search(resetOffset=true) {
       const text = await res.text();
       throw new Error(`Lookup error ${res.status}: ${text}`);
     }
+
     const data = await res.json();
     lastTotal = data.total || 0;
 
@@ -160,6 +160,7 @@ function escapeHtml(s) {
 
 // events
 searchBtn.addEventListener("click", () => search(true));
+
 clearBtn.addEventListener("click", () => {
   charInput.value = "";
   resultsDiv.innerHTML = "";
@@ -171,11 +172,12 @@ clearBtn.addEventListener("click", () => {
 });
 
 prevBtn.addEventListener("click", () => {
-  offset = offset + PAGE_SIZE;
+  offset = Math.max(0, offset - PAGE_SIZE);
   search(false);
 });
+
 nextBtn.addEventListener("click", () => {
-  offset = offset + getLimit();
+  offset = offset + PAGE_SIZE;
   search(false);
 });
 
@@ -183,6 +185,6 @@ charInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") search(true);
 });
 
-// initial health check
+// initial
 checkHealth();
 updatePager();
