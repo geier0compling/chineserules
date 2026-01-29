@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChineseRules - Character Lookup</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>ChineseRules</h1>
+      <p class="sub">Type one Chinese character → get words that contain it (CEDICT).</p>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <label class="label" for="charInput">Character</label>
+        <input id="charInput" class="input" maxlength="1" placeholder="学 / 學 / 国 / 國" />
+      </div>
+
+      <div class="row">
+        <label class="label" for="modeSelect">Writing system</label>
+        <div>
+          <select id="modeSelect" class="select">
+            <option value="both">Both</option>
+            <option value="simp">Simplified</option>
+            <option value="trad">Traditional</option>
+          </select>
+
+          <p class="hint">
+            Choose how characters are shown (Mainland China vs Taiwan/Hong&nbsp;Kong).
+    </p>
+  </div>
+</div>
+
+
+      <div class="row buttons">
+        <button id="searchBtn" class="btn primary">Search</button>
+        <button id="clearBtn" class="btn">Clear</button>
+      </div>
+
+    </section>
+
+    <section class="card">
+      <div class="status">
+        <div id="statusText" class="statusText">Ready.</div>
+        <div id="metaText" class="metaText"></div>
+      </div>
+
+      <div id="results" class="results"></div>
+
+      <div class="pager">
+        <button id="prevBtn" class="btn" disabled>Prev</button>
+        <button id="nextBtn" class="btn" disabled>Next</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
