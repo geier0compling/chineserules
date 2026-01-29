@@ -21,7 +21,7 @@ function setStatus(text, meta = "") {
 
 // ✅ CHANGE THIS to your real Render API URL (https)
 function apiBase() {
-  return "/api";
+  return "https://chineseruleswebservice.onrender.com";
 }
 
 function modeLabel(mode) {
@@ -116,7 +116,7 @@ async function search(resetOffset = true) {
   const mode = modeSelect.value;
   const limit = PAGE_SIZE;
 
-  const url = new URL(`${apiBase()}/lookup`);
+  const url = new URL(`${apiBase()}/lookup`, window.location.href);
   url.searchParams.set("char", ch);
   url.searchParams.set("mode", mode);
   url.searchParams.set("limit", String(limit));
